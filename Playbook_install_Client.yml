@@ -1,22 +1,18 @@
 ---
 - name: Play for setting up WireGuard client from peer.conf
 
-  hosts: wireguard_client
+  hosts: wireguard_clients
 
   tasks:
-
-    - name: Read peer.conf file
-      ansible.builtin.slurp:
-        src: "peer.conf"
+    - name: Read peer.conf file from Ansible controller
+      ansible.builtin.command: cat peer.conf
+      delegate_to: localhost
       register: peer_conf_content
-
-    - name: Decode peer.conf content
-      ansible.builtin.set_fact:
-        peer_conf: "{{ peer_conf_content['content'] | b64decode }}"
+      changed_when: false
 
     - name: Display peer.conf content (for debugging)
       ansible.builtin.debug:
-        msg: "{{ peer_conf }}"
+        msg: "{{ peer_conf_content.stdout }}"
 
     - name: Install WireGuard
       become: true
@@ -30,7 +26,7 @@
       become: true
       become_user: root
       ansible.builtin.copy:
-        content: "{{ peer_conf }}"
+        content: "{{ peer_conf_content.stdout }}"
         dest: /etc/wireguard/wg0.conf
         mode: "0600"
         force: true
