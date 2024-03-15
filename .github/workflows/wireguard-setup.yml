@@ -1,37 +1,34 @@
-# This is a basic workflow to help you get started with Actions
+name: Setup_WireGuard_VPN
 
-name: wireguard_setup
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
-  push:
-    branches: [ "main" ]
-   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
+    inputs:
+      server_ip:
+        description: 'Server IP Address'
+        required: true
+      client_ip:
+        description: 'Client IP Address'
+        required: true
+      username:
+        description: 'Username'
+        required: true
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  setup-vpn:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      # Runs a single command using the runners shell
-      - name: Check grub
-        run: echo Hello, world!
+    - name: Setup Ansible
+      run: |
+        sudo apt-get update
+        sudo apt-get install ansible -y
 
-      # Runs a set of commands using the runners shell
-      - name: Install WireGuard
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
-      - name: Configure WireGuard
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+    - name: Run Ansible Playbook
+      env:
+        SERVER_IP: ${{ github.event.inputs.SERVER_IP }}
+        CLIENT_IP: ${{ github.event.inputs.CLIENT_IP }}
+        USERNAME: ${{ github.event.inputs.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+      run: ansible-playbook ansible/setup-wireguard.yml -i "${SERVER_IP}," -i "${CLIENT_IP}," --extra-vars "ansible_ssh_user=${USERNAME} ansible_ssh_pass=${PASSWORD}"
