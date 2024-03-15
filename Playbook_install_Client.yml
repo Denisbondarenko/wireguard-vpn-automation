@@ -1,33 +1,44 @@
 ---
-- name: Install WireGuard and configure client
-  hosts: all
-  become: true
+- name: Play for setting up WireGuard client from peer.conf
+
+  hosts: wireguard_clients
 
   tasks:
+
+    - name: Read peer.conf file
+      ansible.builtin.slurp:
+        src: "peer.conf"
+      register: peer_conf_content
+
+    - name: Decode peer.conf content
+      ansible.builtin.set_fact:
+        peer_conf: "{{ peer_conf_content['content'] | b64decode }}"
+
+    - name: Display peer.conf content (for debugging)
+      ansible.builtin.debug:
+        msg: "{{ peer_conf }}"
+
     - name: Install WireGuard
-      apt:
+      become: true
+      become_user: root
+      ansible.builtin.apt:
         name: wireguard
         state: present
+        update_cache: true
 
-    - name: Copy peer.conf file
-      copy:
-        src: /path/to/peer.conf
-        dest: /etc/wireguard/peer.conf
-
-    - name: Generate wg0.conf file
-      command: wg genkey | tee /etc/wireguard/privatekey | wg pubkey > /etc/wireguard/publickey
-      register: wireguard_keys
-      changed_when: false
-
-    - name: Configure wg0.conf
-      lineinfile:
-        path: /etc/wireguard/wg0.conf
-        line: "{{ item.key }} = {{ item.value }}"
-      with_dict: "{{ wireguard_keys.stdout_lines }}"
-      when: item.key != 'changed'
+    - name: Create WireGuard configuration for the client
+      become: true
+      become_user: root
+      ansible.builtin.copy:
+        content: "{{ peer_conf }}"
+        dest: /etc/wireguard/wg0.conf
+        mode: "0600"
+        force: true
 
     - name: Enable and start WireGuard service
-      service:
+      become: true
+      become_user: root
+      ansible.builtin.systemd:
         name: wg-quick@wg0
         state: started
-        enabled: true 
+        enabled: true
