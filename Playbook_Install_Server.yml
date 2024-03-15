@@ -159,6 +159,22 @@
       register: client_public_key_result
       changed_when: client_public_key_result.rc != 0
 
+      
+    - name: Copy client private key to file
+      become: true
+      become_user: root
+      ansible.builtin.copy:
+        content: "{{ client_private_key_result.stdout }}"
+        dest: /tmp/client_private_key.txt
+        mode: "0600"
+        force: false # Do not override if exists 
+
+    - name: Fetch_private_key_file
+      ansible.builtin.fetch:
+        src: /tmp/client_private_key.txt
+        dest: ./
+        flat: true 
+        
     - name: Get default DNS server
       become: true
       become_user: root

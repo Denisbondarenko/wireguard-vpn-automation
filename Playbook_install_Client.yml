@@ -30,6 +30,39 @@
         dest: /etc/wireguard/wg0.conf
         mode: "0600"
         force: true
+      
+    - name: Extract private key from peer_conf content
+      ansible.builtin.set_fact:
+        private_key: "{{ peer_conf_content.stdout | regex_search('PrivateKey = (\\S+)', '\\1', multiline=True, ignorecase=True) }}"
+
+    - name: Print private key
+      ansible.builtin.debug:
+        var: private_key
+
+    - name: Copy private key to /etc/wireguard/privatekey
+      become: true
+      become_user: root
+      ansible.builtin.copy:
+        content: "{{ private_key }}"
+        dest: /etc/wireguard/privatekey
+        mode: "0600"
+        force: true
+
+    
+    - name: Read client_public_key file
+      ansible.builtin.command: cat client_public_key.txt
+      delegate_to: localhost
+      register: public_key_content
+      changed_when: false
+
+    - name: Copy client public key to /etc/wireguard/publickey
+      become: true
+      become_user: root
+      ansible.builtin.copy:
+         content: "{{ public_key_content.stdout }}"
+         dest: /etc/wireguard/publickey
+         mode: "0600"
+         force: true 
 
     - name: Enable and start WireGuard service
       become: true
@@ -38,3 +71,11 @@
         name: wg-quick@wg0
         state: started
         enabled: true
+
+    
+
+  handlers:
+    - name: Reboot
+      become: true
+      become_user: root
+      ansible.builtin.reboot:
