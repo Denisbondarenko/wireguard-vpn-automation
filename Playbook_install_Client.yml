@@ -1,7 +1,7 @@
 ---
 - name: Play for setting up WireGuard client from peer.conf
 
-  hosts: wireguard_clients
+  hosts: wireguard_client
 
   tasks:
     - name: Read peer.conf file from Ansible controller
