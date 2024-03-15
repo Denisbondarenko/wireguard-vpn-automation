@@ -1,10 +1,10 @@
 [Interface]
 PrivateKey = {{ client_private_key_result.stdout }}
-Address = 138.197.126.76
+Address = 138.197.126.76/24
 DNS = {{ dns_server.stdout }}
 
 [Peer]
 PublicKey = {{ public_key }}
-Endpoint = {{ ansible_host }}:51820
+Endpoint = 138.197.126.66:51820
 AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25
