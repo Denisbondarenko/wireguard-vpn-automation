@@ -1,0 +1,33 @@
+---
+- name: Install WireGuard and configure client
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Install WireGuard
+      apt:
+        name: wireguard
+        state: present
+
+    - name: Copy peer.conf file
+      copy:
+        src: /path/to/peer.conf
+        dest: /etc/wireguard/peer.conf
+
+    - name: Generate wg0.conf file
+      command: wg genkey | tee /etc/wireguard/privatekey | wg pubkey > /etc/wireguard/publickey
+      register: wireguard_keys
+      changed_when: false
+
+    - name: Configure wg0.conf
+      lineinfile:
+        path: /etc/wireguard/wg0.conf
+        line: "{{ item.key }} = {{ item.value }}"
+      with_dict: "{{ wireguard_keys.stdout_lines }}"
+      when: item.key != 'changed'
+
+    - name: Enable and start WireGuard service
+      service:
+        name: wg-quick@wg0
+        state: started
+        enabled: true 
