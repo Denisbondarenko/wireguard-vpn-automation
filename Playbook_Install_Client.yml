@@ -79,23 +79,7 @@
       ansible.builtin.command: "sysctl -p"
       register: output
       changed_when: output.rc != 0
-
-    - name: Enable WireGuard service
-      become: true
-      become_user: root
-      ansible.builtin.systemd:
-        name: wg-quick@wg0
-        enabled: true
-      notify: Restart WireGuard
-
-    - name: Start WireGuard service
-      become: true
-      become_user: root
-      ansible.builtin.systemd:
-        name: wg-quick@wg0
-        state: started
   
-
   handlers:
    - name: Reboot
      become: true
