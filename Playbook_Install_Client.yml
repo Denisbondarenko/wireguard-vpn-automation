@@ -64,20 +64,6 @@
          mode: "0600"
          force: true 
 
-    - name: Enable WireGuard service
-      become: true
-      become_user: root
-      ansible.builtin.systemd:
-        name: wg-quick@wg0
-        enabled: true
-
-    - name: Start WireGuard service
-      become: true
-      become_user: root
-      ansible.builtin.systemd:
-        name: wg-quick@wg0
-        state: started
-
     - name: Enable IPv4 forwarding in sysctl.conf
       become: true
       become_user: root
@@ -93,10 +79,27 @@
       ansible.builtin.command: "sysctl -p"
       register: output
       changed_when: output.rc != 0
-    
 
-  handlers:
-    - name: Reboot
+    - name: Enable WireGuard service
       become: true
       become_user: root
-      ansible.builtin.reboot:
+      ansible.builtin.systemd:
+        name: wg-quick@wg0
+        enabled: true
+      notify: Restart WireGuard
+
+    - name: Start WireGuard service
+      become: true
+      become_user: root
+      ansible.builtin.systemd:
+        name: wg-quick@wg0
+        state: started
+  
+
+  handlers:
+   - name: Reboot
+     become: true
+     become_user: root
+     ansible.builtin.reboot:
+
+

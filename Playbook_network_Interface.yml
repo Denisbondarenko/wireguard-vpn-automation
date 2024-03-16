@@ -1,0 +1,26 @@
+---
+- name: Configure network interface
+  hosts: wireguard_client
+  become: true
+
+  tasks:
+    - name: Check network interface
+      shell: ip link show eth0
+      register: interface_output
+      ignore_errors: true
+
+    - name: Print message if interface is eth0
+      debug:
+        msg: "Network interface is set to eth0"
+      when: "'eth0' in interface_output.stdout"
+
+    - name: Update grub if interface is not eth0
+      shell: sed -i 's/GRUB_CMDLINE_LINUX="[^"]*"/GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0"/' /etc/default/grub
+      notify: Reboot server
+      when: "'eth0' not in interface_output.stdout"
+
+  handlers:
+    - name: Reboot server
+      reboot:
+        reboot_timeout: 300
+        test_command: uptime
