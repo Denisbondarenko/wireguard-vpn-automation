@@ -1,198 +1,196 @@
-    - name: Update apt package cache
-      become: true
-      become_user: root
-      ansible.builtin.apt:
-        update_cache: true
+  - name: Update apt package cache
+    become: true
+    become_user: root
+    ansible.builtin.apt:
+      update_cache: true
 
-    - name: Install WireGuard and other tools
-      become: true
-      become_user: root
-      ansible.builtin.apt:
-        name:
-          - wireguard
-          - net-tools
-        state: present
+  - name: Install WireGuard and other tools
+    become: true
+    become_user: root
+    ansible.builtin.apt:
+      name:
+        - wireguard
+        - net-tools
+      state: present
 
-    - name: Stop WireGuard service
-      become: true
-      become_user: root
-      ansible.builtin.systemd:
-        name: wg-quick@wg0
-        state: stopped
+  - name: Stop WireGuard service
+    become: true
+    become_user: root
+    ansible.builtin.systemd:
+      name: wg-quick@wg0
+      state: stopped
 
-    - name: Create /etc/wireguard directory
-      become: true
-      become_user: root
-      ansible.builtin.file:
-        path: /etc/wireguard
-        mode: "u=rwx"
-        state: directory
+  - name: Create /etc/wireguard directory
+    become: true
+    become_user: root
+    ansible.builtin.file:
+      path: /etc/wireguard
+      mode: "u=rwx"
+      state: directory
 
-    - name: Generate WireGuard key pair
-      become: true
-      become_user: root
-      ansible.builtin.command: "wg genkey"
-      register: private_key_result
-      changed_when: private_key_result.rc != 0
+  - name: Generate WireGuard key pair
+    become: true
+    become_user: root
+    ansible.builtin.command: "wg genkey"
+    register: private_key_result
+    changed_when: private_key_result.rc != 0
 
-    - name: Save private key to /etc/wireguard/privatekey
-      become: true
-      become_user: root
-      ansible.builtin.copy:
-        content: "{{ private_key_result.stdout }}"
-        dest: /etc/wireguard/privatekey
-        mode: "0600"
-        force: false # Do not override if exists
+  - name: Save private key to /etc/wireguard/privatekey
+    become: true
+    become_user: root
+    ansible.builtin.copy:
+      content: "{{ private_key_result.stdout }}"
+      dest: /etc/wireguard/privatekey
+      mode: "0600"
+      force: false # Do not override if exists
 
+  - name: Generate public key
+    become: true
+    become_user: root
+    ansible.builtin.shell:
+      cmd: "set -o pipefail && echo '{{ private_key_result.stdout }}' | wg pubkey"
+      executable: /bin/bash
+    register: public_key_result
+    changed_when: public_key_result.rc != 0
 
-    - name: Generate public key
-      become: true
-      become_user: root
-      ansible.builtin.shell:
-        cmd: "set -o pipefail && echo '{{ private_key_result.stdout }}' | wg pubkey"
-        executable: /bin/bash
-      register: public_key_result
-      changed_when: public_key_result.rc != 0
+  - name: Save public key to /etc/wireguard/publickey
+    become: true
+    become_user: root
+    ansible.builtin.copy:
+      content: "{{ public_key_result.stdout }}"
+      dest: /etc/wireguard/publickey
+      mode: "0644"
+      force: false # Do not override if exists
 
-    - name: Save public key to /etc/wireguard/publickey
-      become: true
-      become_user: root
-      ansible.builtin.copy:
-        content: "{{ public_key_result.stdout }}"
-        dest: /etc/wireguard/publickey
-        mode: "0644"
-        force: false # Do not override if exists
+  - name: Read private key from file in order to override
+    become: true
+    become_user: root
+    ansible.builtin.slurp:
+      src: /etc/wireguard/privatekey
+    register: file_contents_privatekey
+    
+  - name: Decode base64 readed file and store in a variable
+    ansible.builtin.set_fact:
+      private_key: "{{ file_contents_privatekey.content | b64decode }}"
 
-    - name: Read private key from file in order to override
-      become: true
-      become_user: root
-      ansible.builtin.slurp:
-        src: /etc/wireguard/privatekey
-      register: file_contents_privatekey
+  - name: Read public key from file in order to override
+    become: true
+    become_user: root
+    ansible.builtin.slurp:
+      src: /etc/wireguard/publickey
+    register: file_contents_publickey
 
-    - name: Decode base64 readed file and store in a variable
-      ansible.builtin.set_fact:
-        private_key: "{{ file_contents_privatekey.content | b64decode }}"
+  - name: Decode base64 readed file and store in a variable
+    ansible.builtin.set_fact:
+      public_key: "{{ file_contents_publickey.content | b64decode }}"
 
-    - name: Read public key from file in order to override
-      become: true
-      become_user: root
-      ansible.builtin.slurp:
-        src: /etc/wireguard/publickey
-      register: file_contents_publickey
+  - name: Get default interface
+    become: true
+    become_user: root
+    ansible.builtin.shell:
+      cmd: "set -o pipefail && route | grep '^default' | grep -o '[^ ]*$'"
+      executable: "/bin/bash"
+    register: default_interface
+    changed_when: default_interface.rc != 0
 
-    - name: Decode base64 readed file and store in a variable
-      ansible.builtin.set_fact:
-        public_key: "{{ file_contents_publickey.content | b64decode }}"
+  - name: Create WireGuard configuration file
+    become: true
+    become_user: root
+    ansible.builtin.template:
+      src: wg0.conf.j2
+      dest: /etc/wireguard/wg0.conf
+      force: false # Do not override if exists
+      mode: "u=rw"
 
-    - name: Get default interface
-      become: true
-      become_user: root
-      ansible.builtin.shell:
-        cmd: "set -o pipefail && route | grep '^default' | grep -o '[^ ]*$'"
-        executable: "/bin/bash"
-      register: default_interface
-      changed_when: default_interface.rc != 0
+  - name: Enable WireGuard service
+    become: true
+    become_user: root
+    ansible.builtin.systemd:
+      name: wg-quick@wg0
+      enabled: true
 
-    - name: Create WireGuard configuration file
-      become: true
-      become_user: root
-      ansible.builtin.template:
-        src: wg0.conf.j2
-        dest: /etc/wireguard/wg0.conf
-        force: false # Do not override if exists
-        mode: "u=rw"
+  - name: Start WireGuard service
+    become: true
+    become_user: root
+    ansible.builtin.systemd:
+      name: wg-quick@wg0
+      state: started
 
-    - name: Enable WireGuard service
-      become: true
-      become_user: root
-      ansible.builtin.systemd:
-        name: wg-quick@wg0
-        enabled: true
-
-    - name: Start WireGuard service
-      become: true
-      become_user: root
-      ansible.builtin.systemd:
-        name: wg-quick@wg0
-        state: started
-
-    - name: Enable IPv4 forwarding in sysctl.conf
-      become: true
-      become_user: root
-      ansible.builtin.lineinfile:
-        path: /etc/sysctl.conf
-        line: "net.ipv4.ip_forward = 1"
-        state: present
-      notify: Reboot
-
-    - name: Apply sysctl settings
-      become: true
-      become_user: root
-      ansible.builtin.command: "sysctl -p"
-      register: output
-      changed_when: output.rc != 0
+  - name: Enable IPv4 forwarding in sysctl.conf
+    become: true
+    become_user: root
+    ansible.builtin.lineinfile:
+      path: /etc/sysctl.conf
+      line: "net.ipv4.ip_forward = 1"
+      state: present
+    notify: Reboot
+    
+  - name: Apply sysctl settings
+    become: true
+    become_user: root
+    ansible.builtin.command: "sysctl -p"
+    register: output
+    changed_when: output.rc != 0
 
 
 # Generate local configuration configuration
 
-    - name: Generate WireGuard key pair
-      become: true
-      become_user: root
-      ansible.builtin.command: "wg genkey"
-      register: client_private_key_result
-      changed_when: client_private_key_result.rc != 0
+  - name: Generate WireGuard key pair
+    become: true
+    become_user: root
+    ansible.builtin.command: "wg genkey"
+    register: client_private_key_result
+    changed_when: client_private_key_result.rc != 0
+    
+  - name: Generate public key
+    become: true
+    become_user: root
+    ansible.builtin.shell:
+      cmd: "set -o pipefail && echo '{{ client_private_key_result.stdout }}' | wg pubkey"
+      executable: "/bin/bash"
+    register: client_public_key_result
+    changed_when: client_public_key_result.rc != 0
+    
+  - name: Copy client private public key to file
+    become: true
+    become_user: root
+    ansible.builtin.copy:
+      content: "{{ client_public_key_result.stdout }}"
+      dest: /tmp/client_public_key.txt
+      mode: "0600"
+      force: false # Do not override if exists 
 
-    - name: Generate public key
-      become: true
-      become_user: root
-      ansible.builtin.shell:
-        cmd: "set -o pipefail && echo '{{ client_private_key_result.stdout }}' | wg pubkey"
-        executable: "/bin/bash"
-      register: client_public_key_result
-      changed_when: client_public_key_result.rc != 0
-
+  - name: Fetch_public_key_file
+    ansible.builtin.fetch:
+      src: /tmp/client_public_key.txt
+      dest: ./
+      flat: true 
       
-    - name: Copy client private public key to file
-      become: true
-      become_user: root
-      ansible.builtin.copy:
-        content: "{{ client_public_key_result.stdout }}"
-        dest: /tmp/client_public_key.txt
-        mode: "0600"
-        force: false # Do not override if exists 
+  - name: Get default DNS server
+    become: true
+    become_user: root
+    ansible.builtin.shell:
+      cmd: "set -o pipefail && resolvectl | grep 'Current DNS Server' | awk '{print $NF}'"
+      executable: "/bin/bash"
+    register: dns_server
+    changed_when: dns_server.rc != 0
 
-    - name: Fetch_public_key_file
-      ansible.builtin.fetch:
-        src: /tmp/client_public_key.txt
-        dest: ./
-        flat: true 
-        
-    - name: Get default DNS server
-      become: true
-      become_user: root
-      ansible.builtin.shell:
-        cmd: "set -o pipefail && resolvectl | grep 'Current DNS Server' | awk '{print $NF}'"
-        executable: "/bin/bash"
-      register: dns_server
-      changed_when: dns_server.rc != 0
+  - name: Create WireGuard configuration file for the client
+    ansible.builtin.template:
+      src: /templates/wg0_client.config.j2
+      dest: /tmp/peer.conf
+      force: true # Override if changed
+      mode: "u=rw,g=rw,o=r"
 
-    - name: Create WireGuard configuration file for the client
-      ansible.builtin.template:
-        src: /templates/wg0_client.config.j2
-        dest: /tmp/peer.conf
-        force: true # Override if changed
-        mode: "u=rw,g=rw,o=r"
+  - name: Add client to the server peers
+    become: true
+    become_user: root
+    ansible.builtin.command: "wg set wg0 peer {{ client_public_key_result.stdout }} allowed-ips 138.197.126.76"
+    register: output
+    changed_when: output.rc != 0
 
-    - name: Add client to the server peers
-      become: true
-      become_user: root
-      ansible.builtin.command: "wg set wg0 peer {{ client_public_key_result.stdout }} allowed-ips 138.197.126.76"
-      register: output
-      changed_when: output.rc != 0
-
-    - name: Fetch file
-      ansible.builtin.fetch:
-        src: /tmp/peer.conf
-        dest: ./
-        flat: true
+  - name: Fetch file
+    ansible.builtin.fetch:
+      src: /tmp/peer.conf
+      dest: ./
+      flat: true
