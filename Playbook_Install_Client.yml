@@ -35,6 +35,10 @@
       ansible.builtin.set_fact:
         private_key: "{{ peer_conf_content.stdout | regex_search('PrivateKey = (\\S+)', '\\1', multiline=True, ignorecase=True) }}"
 
+    - name: Decode private key base64 readed file and store in a variable
+      ansible.builtin.set_fact:
+        public_key: "{{ private_key.content | b64decode }}"
+
     - name: Print private key
       ansible.builtin.debug:
         var: private_key
@@ -54,6 +58,10 @@
       delegate_to: localhost
       register: public_key_content
       changed_when: false
+
+    - name: Decode public key base64 readed file and store in a variable
+      ansible.builtin.set_fact:
+        public_key: "{{ public_key_content.content | b64decode }}"
 
     - name: Copy client public key to /etc/wireguard/publickey
       become: true
