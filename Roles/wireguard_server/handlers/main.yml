@@ -1,2 +1,7 @@
 ---
 # handlers file for wireguard_server
+- name: Restart WireGuard
+  systemd:
+    name: wg-quick@wg0
+    state: restarted
+    enabled: yes

@@ -1,0 +1,9 @@
+[Interface]
+Address = 138.197.126.66/24
+SaveConfig = true
+ListenPort = 51820
+PrivateKey = {{ private_key }}
+
+
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ default_interface.stdout }} -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ default_interface.stdout }} -j MASQUERADE
