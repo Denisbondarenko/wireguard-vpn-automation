@@ -1,0 +1,4 @@
+# Ignore privatekey, publickey, and peer.conf files
+privatekey
+publickey
+peer.conf
