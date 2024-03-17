@@ -1,4 +1,4 @@
 # Ignore privatekey, publickey, and peer.conf files
-privatekey
-publickey
+client_private_key
+pclient_public_key
 peer.conf
