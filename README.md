@@ -69,7 +69,7 @@ Reboot Handler
 ## Usage
 
 ```bash
-ansible-playbook -i hosts playbook.yaml
+ansible-playbook -i hosts.ini playbook.yaml
 ```
 
 Were hosts is the inventory file.
@@ -83,8 +83,7 @@ ansible_user=username
 # ansible_port=22
 
 [wireguard]
-myserverhost.wireguard
-```
+ IP Address
 
 After execution a new peer.conf file will be created in the current directory with the wireguard connection settings to the client.
 
@@ -92,8 +91,7 @@ After execution a new peer.conf file will be created in the current directory wi
 
 - [ ] Add more than one client
 - [ ] Add parametrization and options
+  [ ] molecule testing
 
 
-# Helpers
 
-Use in conjunction with terraform instant-ec2-instance
