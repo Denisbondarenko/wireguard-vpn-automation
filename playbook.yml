@@ -1,21 +1,11 @@
-- name: Import and execute Playbook_Install_Server.yml
+---
+- name: Trigger Playbooks
   hosts: localhost
   gather_facts: false
 
   tasks:
-    - name: Import Playbook_Install_Server.yml
-      include_tasks: Playbook_Install_Server.yml
+    - name: Run Playbook_Install_Server.yml
+      include_playbook: Playbook_Install_Server.yml
 
-    - name: Wait for Playbook_Install_Server.yml to finish
-      async: 3600
-      poll: 0
-      register: playbook_server_result
-      until: playbook_server_result.finished
-
-- name: Execute Playbook_Install_Client.yml
-  hosts: localhost
-  gather_facts: false
-
-  tasks:
-    - name: Import Playbook_Install_Client.yml
-      include_tasks: Playbook_Install_Client.yml
+    - name: Run Playbook_Install_Client.yml
+      include_playbook: Playbook_Install_Client.yml
