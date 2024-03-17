@@ -13,3 +13,6 @@
 
     - name: Run Playbook_Install_Client.yml
       include_playbook: Playbook_Install_Client.yml
+
+    - name: Run test.yml
+      include_playbook: Roles/wireguard_server/tests/test.yml

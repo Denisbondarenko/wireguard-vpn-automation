@@ -1,6 +1,6 @@
 ---
   - name: Connect to server and execute shell command
-    hosts: wireguard_server
+    hosts: wireguard
     gather_facts: false
      tasks:
      - name: Execute shell command
