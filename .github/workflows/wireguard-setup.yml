@@ -1,17 +1,7 @@
 name: Setup_WireGuard_VPN
 
 on:
-  workflow_dispatch:
-    inputs:
-      server_ip:
-        description: 'Server IP Address'
-        required: true
-      client_ip:
-        description: 'Client IP Address'
-        required: true
-      username:
-        description: 'Username'
-        required: true
+  push
 
 jobs:
   setup-vpn:
@@ -19,16 +9,11 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-
-    - name: Setup Ansible
-      run: |
-        sudo apt-get update
-        sudo apt-get install ansible -y
-
+  
     - name: Run Ansible Playbook
       env:
         SERVER_IP: ${{ github.event.inputs.SERVER_IP }}
         CLIENT_IP: ${{ github.event.inputs.CLIENT_IP }}
         USERNAME: ${{ github.event.inputs.USERNAME }}
         PASSWORD: ${{ secrets.PASSWORD }}
-      run: ansible-playbook ansible/setup-wireguard.yml -i "${SERVER_IP}," -i "${CLIENT_IP}," --extra-vars "ansible_ssh_user=${USERNAME} ansible_ssh_pass=${PASSWORD}"
+      run: ansible-playbook ansible/playbook.yml -i "${SERVER_IP}," -i "${CLIENT_IP}," --extra-vars "ansible_ssh_user=${USERNAME} ansible_ssh_pass=${PASSWORD}"
