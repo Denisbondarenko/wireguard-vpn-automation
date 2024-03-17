@@ -5,6 +5,6 @@ DNS = {{ dns_server.stdout }}
 
 [Peer]
 PublicKey = {{ public_key }}
-Endpoint = 138.197.126.66:51820
+Endpoint = {{ wireguard_server_ip }}:51820
 AllowedIPs = 0.0.0.0/0
 PersistentKeepalive = 25

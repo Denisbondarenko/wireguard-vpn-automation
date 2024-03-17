@@ -4,7 +4,7 @@
   hosts: wireguard_client
 
   tasks:
-    - name: Read peer.conf file from Ansible controller
+    - name: Read peer configusration file from Ansible controller
       ansible.builtin.command: cat peer.conf
       delegate_to: localhost
       register: peer_conf_content
@@ -30,28 +30,26 @@
         dest: /etc/wireguard/wg0.conf
         mode: "0600"
         force: true
-      
-    - name: Extract private key from peer_conf content
-      ansible.builtin.set_fact:
-        private_key: "{{ peer_conf_content.stdout | regex_search('PrivateKey = (\\S+)', '\\1', multiline=True, ignorecase=True) }}"
+   
+    - name: Read client_private_key file
+      ansible.builtin.command: cat client_private_key
+      delegate_to: localhost
+      register: private_key_content
+      changed_when: false
 
     
-    - name: Print private key
-      ansible.builtin.debug:
-        var: private_key
-
-    - name: Copy private key to /etc/wireguard/privatekey
+    - name: Copy client private key to privatekey
       become: true
       become_user: root
       ansible.builtin.copy:
-        content: "{{ private_key }}"
-        dest: /etc/wireguard/privatekey
-        mode: "0600"
-        force: true
+         content: "{{ private_key_content.stdout }}"
+         dest: /etc/wireguard/privatekey
+         mode: "0600"
+         force: true 
 
-    
+
     - name: Read client_public_key file
-      ansible.builtin.command: cat client_public_key.txt
+      ansible.builtin.command: cat client_public_key
       delegate_to: localhost
       register: public_key_content
       changed_when: false
