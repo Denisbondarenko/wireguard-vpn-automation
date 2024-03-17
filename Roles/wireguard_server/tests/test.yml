@@ -1,5 +1,12 @@
 ---
-- hosts: localhost
-  remote_user: root
-  roles:
-    - wireguard_server
+  - name: Connect to server and execute shell command
+    hosts: wireguard_server
+    gather_facts: false
+     tasks:
+     - name: Execute shell command
+       shell: wg show wg0 peers
+       register: command_output
+       
+    - name: Print command output
+       debug:
+       var: command_output.stdout_lines
