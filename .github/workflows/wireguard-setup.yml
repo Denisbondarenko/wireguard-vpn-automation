@@ -1,11 +1,11 @@
 name: Setup_WireGuard_VPN
 
+
 on:
   push:
       branches:
           - main 
       
-
 jobs:
   setup-vpn:
     runs-on: ubuntu-latest
