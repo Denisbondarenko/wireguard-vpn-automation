@@ -179,7 +179,7 @@
       become: true
       become_user: root
       ansible.builtin.shell:
-        cmd: "set -o pipefail && resolvectl | grep 'Current DNS Server' | awk '{print $NF}'"
+        cmd: "set -o pipefail && resolvectl | grep 'Current DNS Server' | awk '{print $NF}' | head -n 1"
         executable: "/bin/bash"
       register: dns_server
       changed_when: dns_server.rc != 0
