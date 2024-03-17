@@ -19,4 +19,4 @@ jobs:
         CLIENT_IP: ${{ github.event.inputs.CLIENT_IP }}
         USERNAME: ${{ github.event.inputs.USERNAME }}
         PASSWORD: ${{ secrets.PASSWORD }}
-      run: ansible-playbook ansible/playbook.yml -i "${SERVER_IP}," -i "${CLIENT_IP}," --extra-vars "ansible_ssh_user=${USERNAME} ansible_ssh_pass=${PASSWORD}"
+      run: ansible-playbook playbook.yml -i "${SERVER_IP}," -i "${CLIENT_IP}," --extra-vars "ansible_ssh_user=${USERNAME} ansible_ssh_pass=${PASSWORD}"
