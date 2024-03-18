@@ -90,13 +90,7 @@
       notify: Reboot  
 
   handlers:
-   - name: Reboot
-     ansible.builtin.reboot:
-       reboot_timeout: 300
-       msg: "Rebooting the system to apply changes"
-       connect_timeout: 30
-       pre_reboot_delay: 0
-       post_reboot_delay: 30
-       test_command: "uptime"
-       force: true
-
+    - name: Reboot
+      become: true
+      become_user: root
+      ansible.builtin.reboot:
