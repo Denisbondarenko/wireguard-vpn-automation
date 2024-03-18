@@ -209,7 +209,7 @@
     - name: Add client to the server peers
       become: true
       become_user: root
-      ansible.builtin.command: "wg set wg0 peer {{ client_public_key_result.stdout }} allowed-ips 10.10.10.2"
+      ansible.builtin.command: "wg set wg0 peer {{ client_public_key_result.stdout }} allowed-ips 10.10.10.2/32"
       register: output
       changed_when: output.rc != 0
 
