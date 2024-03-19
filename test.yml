@@ -1,0 +1,14 @@
+---
+- name: Test ICMP connectivity between server and client
+  hosts: wirefuard,wirefuard_client
+
+  tasks:
+    - name: Ping client from server
+      ping:
+        count: 5
+      register: ping_result
+
+    - name: Save ping result to file
+      copy:
+        content: "{{ ping_result.stdout }}"
+        dest: ./connectivity_test_result.txt
