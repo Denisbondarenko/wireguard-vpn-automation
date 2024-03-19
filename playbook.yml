@@ -5,8 +5,6 @@
 
   tasks:
 
-    - name: Run Playbook_Network_Interface.yml
-      include_playbook: Playbook_Network_Interface.yml
 
     - name: Run Playbook_Install_Server.yml
       include_playbook: Playbook_Install_Server.yml
