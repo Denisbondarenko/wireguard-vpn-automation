@@ -2,3 +2,4 @@
 client_private_key
 client_public_key
 peer.conf
+hosts.ini
