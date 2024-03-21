@@ -1,6 +1,0 @@
----
-- name: Install WireGuard Server
-  include_tasks: install_wireguard_server.yml
-
-- name: Generate Client Config
-  include_tasks: generate_client_config.yml

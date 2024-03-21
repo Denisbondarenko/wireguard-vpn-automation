@@ -1,5 +1,0 @@
----
-# vars file for wireguard_server
-wireguard_server_ip: 138.197.126.66
-ListenPort: 51820
-
